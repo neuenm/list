@@ -21,28 +21,45 @@ vi.mock('../components', () => ({
       {children}
     </button>
   ),
-  Icon: ({ name, size, className }: any) => (
-    <span data-testid={`icon-${name}`} data-size={size} className={className}>
-      {name}
+  Icon: ({ icon: IconComponent, size, className }: any) => (
+    <span data-testid={`icon-${IconComponent.name}`} data-size={size} className={className}>
+      {IconComponent.name}
     </span>
   ),
-  ListItem: ({ item, isSelected, onItemClick, onItemDoubleClick, isLast }: any) => (
-    <div
-      data-testid={`list-item-${item}`}
-      data-selected={isSelected}
-      data-last={isLast}
-      onClick={() => onItemClick(item)}
-      onDoubleClick={() => onItemDoubleClick(item)}
-    >
-      {item}
-    </div>
-  ),
-  EmptyList: ({ message, actionText, onAction }: any) => (
-    <div data-testid='empty-list'>
-      <p>{message}</p>
-      <button onClick={onAction}>{actionText}</button>
-    </div>
-  ),
+  ListContainer: ({
+    items,
+    selectedItems,
+    isListEmpty,
+    onItemClick,
+    onItemDoubleClick,
+    onAddFirstItem,
+  }: any) => {
+    if (isListEmpty) {
+      return (
+        <div data-testid='empty-list'>
+          <p>No hay elementos en la lista</p>
+          <button onClick={onAddFirstItem}>Agregar primer elemento</button>
+        </div>
+      );
+    }
+
+    return (
+      <div data-testid='list-container'>
+        {items.map((item: string, index: number) => (
+          <div
+            key={index}
+            data-testid={`list-item-${item}`}
+            data-selected={selectedItems.includes(item)}
+            data-last={index === items.length - 1}
+            onClick={() => onItemClick(item)}
+            onDoubleClick={() => onItemDoubleClick(item)}
+          >
+            {item}
+          </div>
+        ))}
+      </div>
+    );
+  },
 }));
 
 describe('App Component', () => {
@@ -100,16 +117,16 @@ describe('App Functionality', () => {
     render(<App />);
 
     // Open dialog
-    const addButton = screen.getByText('ADD');
+    const addButton = screen.getByRole('button', { name: /ADD/ });
     await user.click(addButton);
 
     // Type in textarea
     const textarea = screen.getByPlaceholderText('Type the text here...');
     await user.type(textarea, 'Test item');
 
-    // Confirm dialog
-    const confirmButton = screen.getByRole('button', { name: 'ADD' });
-    await user.click(confirmButton);
+    // Confirm dialog - use the dialog's ADD button specifically
+    const dialogConfirmButton = screen.getByTestId('dialog').querySelector('button:last-child');
+    await user.click(dialogConfirmButton!);
 
     // Check if item was added
     expect(screen.getByTestId('list-item-Test item')).toBeInTheDocument();

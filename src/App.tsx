@@ -1,81 +1,58 @@
 import { useState } from 'react';
-import { Dialog, Button, Icon, ListItem, EmptyList } from './components';
+import { Dialog, Button, Icon, ListContainer } from './components';
 import { useDialog } from './hooks/useDialog';
+import { useList } from './hooks/useList';
+import { useHistory } from './hooks/useHistory';
 import { Undo2, Redo2, Trash2, Plus } from 'lucide-react';
 import './App.css';
 
 function App() {
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [items, setItems] = useState<string[]>([]);
   const [newItemText, setNewItemText] = useState<string>('');
-  const [history, setHistory] = useState<string[][]>([[]]);
-  const [historyIndex, setHistoryIndex] = useState<number>(0);
 
   const { isDialogOpen, openDialog, closeDialog } = useDialog();
+  const {
+    items,
+    selectedItems,
+    isListEmpty,
+    addItem,
+    deleteItem,
+    deleteSelectedItems,
+    toggleItemSelection,
+    clearSelection,
+    setItems,
+  } = useList();
 
-  // Función para guardar estado en el historial
-  const saveToHistory = (newItems: string[]) => {
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(newItems);
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
+  const { canUndo, canRedo, saveToHistory, undo, redo } = useHistory();
 
-  // Función para deshacer cambios
   const handleUndo = () => {
-    if (historyIndex > 0) {
-      const newIndex = historyIndex - 1;
-      const previousItems = history[newIndex];
+    const previousItems = undo();
+    if (previousItems) {
       setItems(previousItems);
-      setSelectedItems([]); // Siempre limpiar selecciones al deshacer
-      setHistoryIndex(newIndex);
+      clearSelection();
     }
   };
 
-  // Función para rehacer cambios
   const handleRedo = () => {
-    if (historyIndex < history.length - 1) {
-      const newIndex = historyIndex + 1;
-      const nextItems = history[newIndex];
+    const nextItems = redo();
+    if (nextItems) {
       setItems(nextItems);
-      setSelectedItems([]); // Siempre limpiar selecciones al rehacer
-      setHistoryIndex(newIndex);
+      clearSelection();
     }
   };
-
-  // Verificar si se puede deshacer
-  const canUndo = historyIndex > 0;
-  // Verificar si se puede rehacer
-  const canRedo = historyIndex < history.length - 1;
-
-  const isListEmpty = items.length === 0;
 
   const handleItemClick = (item: string) => {
-    setSelectedItems((prev) => {
-      if (prev.includes(item)) {
-        // Remover item si ya está seleccionado
-        return prev.filter((selectedItem) => selectedItem !== item);
-      } else {
-        // Agregar item si no está seleccionado
-        return [...prev, item];
-      }
-    });
+    toggleItemSelection(item);
   };
 
   const handleItemDoubleClick = (item: string) => {
-    // Eliminar el item directamente con doble clic
-    const newItems = items.filter((listItem) => listItem !== item);
-    setItems(newItems);
-    setSelectedItems([]); // Limpiar selecciones
-    saveToHistory(newItems);
+    deleteItem(item);
+    saveToHistory(items.filter((listItem) => listItem !== item));
   };
 
   const handleDelete = () => {
-    if (!isListEmpty) {
-      const newItems = items.filter((item) => !selectedItems.includes(item));
-      setItems(newItems);
-      setSelectedItems([]);
-      saveToHistory(newItems);
+    if (!isListEmpty && selectedItems.length > 0) {
+      deleteSelectedItems();
+      saveToHistory(items.filter((item) => !selectedItems.includes(item)));
     }
   };
 
@@ -86,10 +63,9 @@ function App() {
 
   const handleDialogConfirm = () => {
     if (newItemText.trim()) {
-      const newItems = [...items, newItemText.trim()];
-      setItems(newItems);
+      addItem(newItemText);
+      saveToHistory([...items, newItemText.trim()]);
       handleDialogClose();
-      saveToHistory(newItems);
     }
   };
 
@@ -111,27 +87,14 @@ function App() {
         )}
 
         {/* Sección de Lista */}
-        <div className='bg-gray-50 rounded-lg border border-gray-200 mb-6'>
-          {isListEmpty ? (
-            <EmptyList
-              message='No hay elementos en la lista'
-              actionText='Agregar primer elemento'
-              onAction={openDialog}
-            />
-          ) : (
-            items.map((item, index) => (
-              <ListItem
-                key={index}
-                item={item}
-                index={index}
-                isSelected={selectedItems.includes(item)}
-                isLast={index === items.length - 1}
-                onItemClick={handleItemClick}
-                onItemDoubleClick={handleItemDoubleClick}
-              />
-            ))
-          )}
-        </div>
+        <ListContainer
+          items={items}
+          selectedItems={selectedItems}
+          isListEmpty={isListEmpty}
+          onItemClick={handleItemClick}
+          onItemDoubleClick={handleItemDoubleClick}
+          onAddFirstItem={openDialog}
+        />
 
         {/* Sección de Botones */}
         <div className='flex justify-between items-center'>
