@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { Dialog, Button, Icon, ListItem, EmptyList } from './components';
+import { useDialog } from './hooks/useDialog';
+import { Undo2, Redo2, Trash2, Plus } from 'lucide-react';
 import './App.css';
 
 function App() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [items, setItems] = useState<string[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [newItemText, setNewItemText] = useState<string>('');
   const [history, setHistory] = useState<string[][]>([[]]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
+
+  const { isDialogOpen, openDialog, closeDialog } = useDialog();
 
   // Función para guardar estado en el historial
   const saveToHistory = (newItems: string[]) => {
@@ -76,12 +79,8 @@ function App() {
     }
   };
 
-  const handleAdd = () => {
-    setIsDialogOpen(true);
-  };
-
   const handleDialogClose = () => {
-    setIsDialogOpen(false);
+    closeDialog();
     setNewItemText('');
   };
 
@@ -89,8 +88,7 @@ function App() {
     if (newItemText.trim()) {
       const newItems = [...items, newItemText.trim()];
       setItems(newItems);
-      setNewItemText('');
-      setIsDialogOpen(false);
+      handleDialogClose();
       saveToHistory(newItems);
     }
   };
@@ -118,7 +116,7 @@ function App() {
             <EmptyList
               message='No hay elementos en la lista'
               actionText='Agregar primer elemento'
-              onAction={handleAdd}
+              onAction={openDialog}
             />
           ) : (
             items.map((item, index) => (
@@ -145,7 +143,7 @@ function App() {
               disabled={!canUndo}
               title={canUndo ? 'Deshacer último cambio' : 'No hay cambios para deshacer'}
             >
-              <Icon name='undo' />
+              <Icon icon={Undo2} />
             </Button>
 
             {/* Botón Rehacer */}
@@ -155,21 +153,21 @@ function App() {
               disabled={!canRedo}
               title={canRedo ? 'Rehacer último cambio deshecho' : 'No hay cambios para rehacer'}
             >
-              <Icon name='redo' />
+              <Icon icon={Redo2} />
             </Button>
 
             {/* Botón Eliminar */}
             {selectedItems.length > 0 && (
               <Button variant='secondary' onClick={handleDelete}>
-                <Icon name='delete' size='sm' className='mr-1' />
+                <Icon icon={Trash2} size={16} className='mr-1' />
                 DELETE
               </Button>
             )}
           </div>
 
           {/* Botón Agregar */}
-          <Button variant='primary' onClick={handleAdd}>
-            <Icon name='add' size='sm' className='mr-1' />
+          <Button variant='primary' onClick={openDialog}>
+            <Icon icon={Plus} size={16} className='mr-1' />
             ADD
           </Button>
         </div>

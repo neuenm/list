@@ -1,5 +1,7 @@
 import React from 'react';
 import Icon from './Icon';
+import Button from './Button';
+import { ClipboardList, Plus } from 'lucide-react';
 
 interface EmptyListProps {
   message?: string;
@@ -16,7 +18,7 @@ const EmptyList: React.FC<EmptyListProps> = ({
     <div className='flex flex-col items-center justify-center py-12 px-6 text-center'>
       {/* Icono */}
       <div className='mb-4 text-gray-400'>
-        <Icon name='empty-list' size='lg' className='w-16 h-16' />
+        <Icon icon={ClipboardList} size={64} className='w-16 h-16' />
       </div>
 
       {/* Mensaje */}
@@ -29,13 +31,10 @@ const EmptyList: React.FC<EmptyListProps> = ({
 
       {/* Botón de acción (opcional) */}
       {onAction && (
-        <button
-          onClick={onAction}
-          className='inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200'
-        >
-          <Icon name='add' size='sm' className='mr-2' />
+        <Button onClick={onAction} variant='primary' size='md' className='inline-flex items-center'>
+          <Icon icon={Plus} size={16} className='mr-2' />
           {actionText}
-        </button>
+        </Button>
       )}
     </div>
   );

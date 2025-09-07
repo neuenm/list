@@ -1,6 +1,7 @@
 import { useEffect, useRef, ReactNode } from 'react';
 import Button from './Button';
 import Icon from './Icon';
+import { Plus } from 'lucide-react';
 
 interface DialogProps {
   isOpen: boolean;
@@ -65,7 +66,7 @@ const Dialog = ({
             {cancelText}
           </Button>
           <Button variant='primary' onClick={handleConfirm} type='button'>
-            <Icon name='add' size='sm' className='mr-1' />
+            <Icon icon={Plus} size={16} className='mr-1' />
             {confirmText}
           </Button>
         </div>
